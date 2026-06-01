@@ -1,0 +1,5 @@
+# Optional packages for comparison against your own implementation.
+# The project asks you to write your own VQE code; these are only for checks.
+qiskit
+qiskit-aer
+pennylane

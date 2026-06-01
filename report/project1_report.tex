@@ -1,0 +1,520 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{siunitx}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage[capitalise,nameinlink]{cleveref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{dblfloatfix}
+\usepackage{placeins}
+\usepackage{needspace}
+
+\geometry{left=1.65cm,right=1.65cm,top=1.9cm,bottom=2.0cm}
+\graphicspath{{figures/}{../results/figures/}{}}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    citecolor=blue!50!black,
+    urlcolor=blue!50!black,
+    pdftitle={Variational eigensolver benchmark calculations for Lipkin-model Hamiltonians},
+    pdfauthor={Marius Torsheim}
+}
+
+\captionsetup{font=normalsize,labelfont=bf}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0.15em}
+\setlength{\columnsep}{0.65cm}
+\setlist[itemize]{topsep=0.25em,itemsep=0.1em}
+\setlist[enumerate]{topsep=0.25em,itemsep=0.1em}
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{4pt}
+\setlength{\textfloatsep}{0.8\baselineskip}
+\setlength{\intextsep}{0.7\baselineskip}
+\setlength{\floatsep}{0.7\baselineskip}
+
+\sisetup{scientific-notation=true,round-mode=figures,round-precision=3}
+
+\lstset{
+  basicstyle=\ttfamily\normalsize,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  backgroundcolor=\color{gray!6},
+  keywordstyle=\color{blue!60!black},
+  commentstyle=\color{green!35!black},
+  stringstyle=\color{red!50!black}
+}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+\newcommand{\ket}[1]{\left|#1\right\rangle}
+\newcommand{\bra}[1]{\left\langle #1\right|}
+\newcommand{\braket}[2]{\left\langle #1 \middle| #2 \right\rangle}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\eps}{\varepsilon}
+
+
+\begin{document}
+\thispagestyle{empty}
+\vspace*{1.0cm}
+\begin{center}
+{\large FYS5419/FYS9419: Quantum Computing and Quantum Machine Learning\par}
+\vspace{0.65cm}
+{\LARGE\bfseries Variational Eigensolver Benchmark Calculations for Lipkin-Model Hamiltonians\par}
+\vspace{0.25cm}
+{\large Exact diagonalization and variational quantum eigensolver studies of the Lipkin model\par}
+\vspace{0.65cm}
+{\large Marius Torsheim\par}
+{\large Department of Physics, University of Oslo\par}
+{\large Spring 2026\par}
+\vspace{0.55cm}
+{\large\bfseries Abstract\par}
+\end{center}
+\noindent Small interacting quantum Hamiltonians provide useful benchmarks for variational quantum eigensolver (VQE) methods because their spectra can be computed exactly while still containing basis mixing, level rearrangements, and entanglement. This work implements state-vector simulations of elementary one- and two-qubit systems and of the Lipkin-Meshkov-Glick Hamiltonian for total spins $J=1$ and $J=2$. The calculations combine exact diagonalization, Pauli decompositions of qubit embeddings, subsystem entanglement entropies, ground-state VQE, and an orthogonality-constrained excited-state VQE procedure. The one-qubit model displays an avoided crossing near $\lambda=2/3$, where the ground-state character changes from mostly $\ket{0}$ to mostly $\ket{1}$. The two-qubit model shows a change of the lowest parity sector near $\lambda\approx0.4$, producing a visible jump in the ground-state entropy. For the Lipkin Hamiltonian, the $W=0$ spectra are symmetric about zero and are reproduced by the excited-state VQE to roundoff accuracy. The largest absolute VQE errors in the scans are $1.65\times10^{-12}$ for the one-qubit ground state, $4.61\times10^{-12}$ for the two-qubit ground state, $4.44\times10^{-16}$ for the full $J=1$ Lipkin spectrum, and $2.67\times10^{-15}$ for the full $J=2$ Lipkin spectrum. These small errors reflect noiseless simulation and expressive variational ansaetze rather than hardware-level performance.
+
+\vfill
+\begin{center}
+Repository: \href{https://github.com/Torsheim/FYS5419_Project_1}{\texttt{https://github.com/Torsheim/FYS5419\_Project\_1}}
+\end{center}
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\twocolumn
+
+\section{Introduction}
+
+The Lipkin-Meshkov-Glick model is a compact many-body benchmark for quantum algorithms. It is simple enough to diagonalize exactly in small spin sectors, but nontrivial enough to show interaction-driven mixing, level rearrangements, and entanglement. These features make it suitable for testing variational quantum algorithms before moving to larger systems where exact diagonalization is impossible.
+
+The variational quantum eigensolver is a hybrid method in which a parameterized state is prepared, the Hamiltonian expectation value is evaluated, and a classical optimizer updates the parameters to minimize the energy \cite{peruzzo2014vqe}. In this work the VQE calculations are performed with noiseless state-vector simulation. The focus is therefore the correctness and expressivity of the ansaetze, the connection between matrix Hamiltonians and Pauli-string measurements, and the agreement with exact diagonalization.
+
+The numerical study has three layers. First, basic quantum-state operations are validated by preparing a Bell state, sampling measurements, and computing a reduced density matrix. Second, one- and two-qubit Hamiltonians are solved as functions of an interaction parameter $\lambda$, and the exact spectra are compared with compact VQE ansaetze. Third, the $J=1$ and $J=2$ Lipkin Hamiltonians are diagonalized as functions of the coupling $V$, embedded into qubit spaces, decomposed into Pauli strings, and reproduced with an excited-state VQE procedure. The scientific questions are how the spectra reorganize as interactions are increased, how entanglement is generated by the Hamiltonian, and how accurately noiseless VQE can reproduce the exact spectra.
+
+\section{Model Hamiltonians and VQE}
+\label{sec:methods}
+
+\subsection{Gates, density matrices, and entropy}
+
+The one-qubit computational basis is
+\begin{equation}
+\ket{0}=\begin{pmatrix}1\\0\end{pmatrix},\qquad
+\ket{1}=\begin{pmatrix}0\\1\end{pmatrix}.
+\end{equation}
+The gate validation uses the Pauli matrices
+\begin{equation}
+X=\begin{pmatrix}0&1\\1&0\end{pmatrix},\quad
+Y=\begin{pmatrix}0&-\ii\\ \ii&0\end{pmatrix},\quad
+Z=\begin{pmatrix}1&0\\0&-1\end{pmatrix},
+\end{equation}
+with the Hadamard and phase gates
+\begin{equation}
+H=\frac{1}{\sqrt{2}}\begin{pmatrix}1&1\\1&-1\end{pmatrix},\qquad
+S=\begin{pmatrix}1&0\\0&\ii\end{pmatrix}.
+\end{equation}
+Starting from $\ket{00}$, applying $H$ to the first qubit followed by a CNOT gives
+\begin{equation}
+\mathrm{CNOT}_{0,1}(H\otimes I)\ket{00}
+=\frac{\ket{00}+\ket{11}}{\sqrt{2}}\equiv\ket{\Phi^+}.
+\end{equation}
+For a pure state $\ket{\psi}$ the density matrix is $\rho=\ket{\psi}\bra{\psi}$. Entanglement of a bipartite pure state is quantified by tracing out one subsystem and evaluating the von Neumann entropy
+\begin{equation}
+S(\rho_A)=-\Tr\left(\rho_A\log_2\rho_A\right),\qquad
+\rho_A=\Tr_B(\rho).
+\label{eq:entropy}
+\end{equation}
+For $\ket{\Phi^+}$, $\rho_A=I/2$ and $S(\rho_A)=1$.
+
+\subsection{Two-level Hamiltonian}
+
+The one-qubit Hamiltonian is
+\begin{equation}
+H(\lambda)=H_0+\lambda H_I,
+\end{equation}
+with $E_1=0$, $E_2=4$, $V_{11}=3$, $V_{22}=-3$, and $V_{12}=V_{21}=0.2$. In the computational basis,
+\begin{equation}
+H(\lambda)=
+\begin{pmatrix}
+3\lambda & 0.2\lambda\\
+0.2\lambda & 4-3\lambda
+\end{pmatrix}.
+\label{eq:onequbit_hamiltonian}
+\end{equation}
+Equivalently,
+\begin{equation}
+H(\lambda)=2I+0.2\lambda X+(3\lambda-2)Z.
+\end{equation}
+The exact eigenvalues are
+\begin{equation}
+E_\pm(\lambda)=2\pm\sqrt{(3\lambda-2)^2+(0.2\lambda)^2}.
+\label{eq:onequbit_exact}
+\end{equation}
+The diagonal terms become equal at $\lambda=2/3$, while the off-diagonal matrix element opens an avoided crossing.
+
+\subsection{Two-qubit Hamiltonian}
+
+The interacting two-qubit Hamiltonian is
+\begin{equation}
+H(\lambda)=H_0+\lambda\left(H_x X\otimes X+H_z Z\otimes Z\right),
+\end{equation}
+with $H_x=2.0$, $H_z=3.0$, and noninteracting energies
+\begin{equation}
+(\epsilon_{00},\epsilon_{01},\epsilon_{10},\epsilon_{11})=(0.0,2.5,6.5,7.0).
+\end{equation}
+In the ordered basis $\{\ket{00},\ket{01},\ket{10},\ket{11}\}$,
+\begin{equation}
+\resizebox{0.96\columnwidth}{!}{$\displaystyle
+H(\lambda)=
+\begin{pmatrix}
+\epsilon_{00}+\lambda H_z & 0 & 0 & \lambda H_x\\
+0 & \epsilon_{01}-\lambda H_z & \lambda H_x & 0\\
+0 & \lambda H_x & \epsilon_{10}-\lambda H_z & 0\\
+\lambda H_x & 0 & 0 & \epsilon_{11}+\lambda H_z
+\end{pmatrix}$}.
+\label{eq:twoqubit_hamiltonian}
+\end{equation}
+The matrix separates into two two-dimensional sectors: $\{\ket{00},\ket{11}\}$ and $\{\ket{01},\ket{10}\}$. This block structure is used directly in the VQE ansatz.
+
+\subsection{Lipkin Hamiltonian and qubit embedding}
+
+The Lipkin Hamiltonian is written in terms of quasispin operators as
+\begin{equation}
+H=\epsilon J_z+\frac{V}{2}(J_+^2+J_-^2)+\frac{W}{2}(-N+J_+J_-+J_-J_+).
+\label{eq:lipkin_operator}
+\end{equation}
+For $J=1$ and $W=0$, the matrix is
+\begin{equation}
+H_{J=1}=\begin{pmatrix}
+-\epsilon & 0 & -V\\
+0&0&0\\
+-V&0&\epsilon
+\end{pmatrix}.
+\label{eq:j1_matrix}
+\end{equation}
+For $J=2$, the matrix is
+\begin{equation}
+\begingroup
+\setlength{\arraycolsep}{2.0pt}
+H_{J=2}=\begin{pmatrix}
+-2\epsilon & 0 & \sqrt{6}V & 0 & 0\\
+0 & -\epsilon+3W & 0 & 3V & 0\\
+\sqrt{6}V & 0 & 4W & 0 & \sqrt{6}V\\
+0 & 3V & 0 & \epsilon+3W & 0\\
+0 & 0 & \sqrt{6}V & 0 & 2\epsilon
+\end{pmatrix}.
+\endgroup
+\label{eq:j2_matrix}
+\end{equation}
+The numerical spectra below use $\epsilon=1$ and $W=0$. To express the matrices as qubit Hamiltonians, $H_{J=1}$ is embedded in a two-qubit Hilbert space and $H_{J=2}$ is embedded in a three-qubit Hilbert space. The additional basis states are unphysical padding states, assigned a positive penalty $\Delta$ in the Pauli decompositions. The resulting coefficients are given in \cref{tab:j1_pauli,tab:j2_pauli_diag,tab:j2_pauli_coupling} and are discussed with the Lipkin spectra in \cref{sec:lipkin_results}.
+
+\subsection{VQE ansaetze}
+
+For the two-level system, the variational state is
+\begin{equation}
+\ket{\psi(\theta)}=R_y(\theta)\ket{0}=\cos\frac{\theta}{2}\ket{0}+\sin\frac{\theta}{2}\ket{1}.
+\end{equation}
+This spans all real one-qubit states, which is sufficient for the real symmetric Hamiltonian in \cref{eq:onequbit_hamiltonian}.
+
+For the two-qubit Hamiltonian, the two sector ansaetze are
+\begin{align}
+\ket{\psi_e(\theta)}&=\cos\frac{\theta}{2}\ket{00}+\sin\frac{\theta}{2}\ket{11},\\
+\ket{\psi_o(\theta)}&=\cos\frac{\theta}{2}\ket{01}+\sin\frac{\theta}{2}\ket{10}.
+\end{align}
+These are one-parameter states within the exact parity blocks. For the Lipkin calculations I use normalized real-amplitude vectors in the embedded qubit space. Excited states are obtained by sequential deflation: after finding $k$ lower states $\{\ket{\phi_j}\}_{j=0}^{k-1}$, the next trial vector is projected with
+\begin{equation}
+P_k=I-\sum_{j=0}^{k-1}\ket{\phi_j}\bra{\phi_j},
+\end{equation}
+and the Rayleigh quotient is minimized in the orthogonal subspace. This gives a direct excited-state benchmark in the noiseless setting.
+
+\section{Implementation and numerical checks}
+
+All numerical routines were written in Python with \texttt{numpy} and \texttt{scipy}. The implementation contains separate modules for gate operations and density matrices, Hamiltonian construction and Pauli decompositions, VQE objectives and optimization, and reproducible plotting. Unit tests check gate actions, Bell-state entropy, exact matrix construction, Pauli reconstructions, and VQE agreement with exact diagonalization.
+
+The exact one-qubit spectrum was checked against \cref{eq:onequbit_exact}. The $J=1$ Lipkin spectrum was checked against the closed form
+\begin{equation}
+E_0=-\sqrt{\epsilon^2+V^2},\qquad E_1=0,
+\qquad E_2=+\sqrt{\epsilon^2+V^2}.
+\end{equation}
+The Bell-state test checks both the overlap with $\ket{\Phi^+}$ and the reduced entropy $S(\rho_A)=S(\rho_B)=1$. The VQE results are compared pointwise with exact diagonalization. Since all calculations are noiseless state-vector simulations, the observed VQE errors mainly measure optimizer tolerance and floating-point roundoff.
+
+\section{Results and discussion}
+\label{sec:results}
+
+\Needspace{22\baselineskip}
+\subsection{Bell-state validation}
+
+The gate operations reproduce the expected basis transformations. The $H$-CNOT circuit prepares $\ket{\Phi^+}$ with unit overlap. The sampled measurement distribution is summarized in \cref{tab:bell_measurements}. Only $00$ and $11$ occur, and their frequencies are close to the exact probabilities $1/2$ and $1/2$. The same calculation gives $\rho_A=\rho_B=I/2$, and therefore $S(\rho_A)=S(\rho_B)=1$. The table therefore verifies both the measurement correlations and the entanglement diagnostic used later for the interacting two-qubit Hamiltonian.
+
+\begin{table}[H]
+\centering
+\caption{Bell-state measurement statistics for $5000$ computational-basis shots. The exact probabilities are those of $\ket{\Phi^+}$.}
+\label{tab:bell_measurements}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Outcome & Counts & Frequency & Exact \\
+\midrule
+$00$ & 2469 & 0.4938 & 0.5000\\
+$11$ & 2531 & 0.5062 & 0.5000\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\Needspace{22\baselineskip}
+\subsection{Avoided crossing in the two-level Hamiltonian}
+
+The two-level spectrum follows the analytic expression in \cref{eq:onequbit_exact}. \Cref{fig:one_qubit_eigenvalues} shows the noninteracting values $0$ and $4$ at $\lambda=0$ and the avoided crossing near $\lambda=2/3$. The two diagonal energies become nearly degenerate there, but the off-diagonal coupling $0.2\lambda$ prevents an exact crossing.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_b_one_qubit_eigenvalues.pdf}
+\caption{Exact eigenvalues of the two-level Hamiltonian as functions of $\lambda$. The coupling between basis states opens an avoided crossing near $\lambda=2/3$.}
+\label{fig:one_qubit_eigenvalues}
+\end{figure}
+
+\Needspace{15\baselineskip}
+The eigenvectors reorganize in the same region. \Cref{fig:one_qubit_weights} shows that the ground state is almost purely $\ket{0}$ for small $\lambda$, changes rapidly around the avoided crossing, and is almost purely $\ket{1}$ by $\lambda=1$. The final $\ket{0}$ weight is approximately $9.71\times10^{-3}$, consistent with a near-complete interchange of eigenvector character.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_b_one_qubit_weights.pdf}
+\caption{Ground-state composition of the two-level Hamiltonian. The dominant basis component changes from $\ket{0}$ to $\ket{1}$ through the avoided-crossing region.}
+\label{fig:one_qubit_weights}
+\end{figure}
+
+\Needspace{15\baselineskip}
+The VQE benchmark in \cref{fig:one_qubit_vqe_error} is accurate to roundoff level, with a maximum absolute error of $1.65\times10^{-12}$. This is expected because a single $R_y$ rotation spans all real one-qubit states, so the exact ground state is contained in the variational family.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_c_one_qubit_vqe_error.pdf}
+\caption{Absolute error of the one-qubit VQE ground-state energy relative to exact diagonalization. The error is dominated by numerical precision.}
+\label{fig:one_qubit_vqe_error}
+\end{figure}
+\FloatBarrier
+
+
+\Needspace{22\baselineskip}
+\subsection{Parity-sector crossing and entanglement}
+
+The two-qubit eigenvalues in \cref{fig:two_qubit_eigenvalues} begin at the noninteracting energies $0$, $2.5$, $6.5$, and $7.0$. Increasing $\lambda$ shifts and mixes the two parity sectors differently. The lowest-energy branch changes sector near $\lambda\approx0.4$, visible as a change in the slope of the ground-state energy.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_d_two_qubit_eigenvalues.pdf}
+\caption{Exact eigenvalues of the two-qubit Hamiltonian. The ground-state branch changes near $\lambda\approx0.4$ because the even and odd parity sectors compete.}
+\label{fig:two_qubit_eigenvalues}
+\end{figure}
+
+\Needspace{15\baselineskip}
+The entropy in \cref{fig:two_qubit_entropy} is a direct consequence of interaction-driven mixing. At $\lambda=0$ the ground state is a product state and the entropy is zero. As the interaction mixes computational basis states, the reduced density matrix becomes mixed and the entropy increases. The jump near $\lambda\approx0.4$ occurs because the identity of the lowest eigenvector changes between parity sectors. Thus the entropy is sensitive not only to the interaction strength, but also to spectral rearrangements.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_d_two_qubit_entropy.pdf}
+\caption{Von Neumann entropy of one qubit in the exact two-qubit ground state. The entropy grows with interaction strength and jumps when the ground-state sector changes.}
+\label{fig:two_qubit_entropy}
+\end{figure}
+
+\Needspace{15\baselineskip}
+The corresponding VQE errors are shown in \cref{fig:two_qubit_vqe_error}. The maximum absolute error is $4.61\times10^{-12}$, confirming that the sector-adapted ansatz represents the exact ground state in this noiseless setting and follows the correct branch through the sector change.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_e_two_qubit_vqe_error.pdf}
+\caption{Absolute error of the two-qubit VQE ground-state energy. Separate optimization in the two parity sectors reproduces the exact ground-state branch.}
+\label{fig:two_qubit_vqe_error}
+\end{figure}
+\FloatBarrier
+
+
+\Needspace{22\baselineskip}
+\subsection{Lipkin spectra and Pauli embeddings}
+\label{sec:lipkin_results}
+
+The exact Lipkin spectrum for $J=1$ and $W=0$ is shown in \cref{fig:lipkin_j1_exact}. For $\epsilon=1$, the analytic energies are $E=0$ and $E=\pm\sqrt{1+V^2}$, which explains the flat central level and the symmetric upper and lower branches. This analytic result provides a useful check on the implementation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_f_lipkin_j1_exact.pdf}
+\caption{Exact Lipkin spectrum for $J=1$, $\epsilon=1$, and $W=0$. The spectrum consists of $E=0$ and the branches $E=\pm\sqrt{1+V^2}$.}
+\label{fig:lipkin_j1_exact}
+\end{figure}
+
+\Needspace{15\baselineskip}
+The $J=2$ spectrum in \cref{fig:lipkin_j2_exact} is also symmetric around zero for $W=0$. At $V=0$ the levels are $-2,-1,0,1,2$, while at $V=2$ the numerical spectrum is approximately $(-7.211,-6.083,0,6.083,7.211)$. The figure shows how the pair-scattering interaction separates the branches while preserving the symmetry of the $W=0$ spectrum.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_f_lipkin_j2_exact.pdf}
+\caption{Exact Lipkin spectrum for $J=2$, $\epsilon=1$, and $W=0$. The eigenvalues are symmetric about zero over the full coupling interval.}
+\label{fig:lipkin_j2_exact}
+\end{figure}
+
+\Needspace{15\baselineskip}
+The Pauli decompositions in \cref{tab:j1_pauli,tab:j2_pauli_diag,tab:j2_pauli_coupling} give the corresponding qubit Hamiltonians after embedding. \Cref{tab:j1_pauli} contains the complete two-qubit representation of the $J=1$ matrix. The penalty $\Delta$ only acts on the padded unphysical basis state and does not alter the physical three-dimensional sector.
+
+\begin{table}[H]
+\centering
+\caption{Pauli coefficients for the embedded $J=1$ Lipkin Hamiltonian. The penalty $\Delta$ acts only on the padded unphysical basis state.}
+\label{tab:j1_pauli}
+\begin{tabularx}{\linewidth}{@{}cY@{}}
+\toprule
+String & Coefficient \\
+\midrule
+$II$ & $\Delta/4$\\
+$IZ$ & $-\Delta/4$\\
+$XI$ & $-V/2$\\
+$XZ$ & $-V/2$\\
+$ZI$ & $-\epsilon/2-\Delta/4$\\
+$ZZ$ & $-\epsilon/2+\Delta/4$\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\Needspace{15\baselineskip}
+For the embedded $J=2$ Hamiltonian, the $Z$-type terms in \cref{tab:j2_pauli_diag} contain the single-particle scale $\epsilon$, the $W$ interaction, and the padding penalty. The coupling terms in \cref{tab:j2_pauli_coupling} are proportional to $V$ and represent the pair-scattering part of the Hamiltonian. Retaining the $W$ coefficients in the tables specifies the extension beyond the $W=0$ spectra plotted above.
+
+\begin{table}[H]
+\centering
+\caption{Diagonal and $Z$-type Pauli coefficients for the embedded $J=2$ Lipkin Hamiltonian.}
+\label{tab:j2_pauli_diag}
+\begin{tabularx}{\linewidth}{@{}cY@{}}
+\toprule
+String & Coefficient \\
+\midrule
+$III$ & $5W/4+3\Delta/8$\\
+$IIZ$ & $-W/4-\Delta/8$\\
+$IZI$ & $-\epsilon/4-W/2-\Delta/8$\\
+$IZZ$ & $\epsilon/4-W/2-\Delta/8$\\
+$ZII$ & $-\epsilon/2+5W/4-3\Delta/8$\\
+$ZIZ$ & $-\epsilon/2-W/4+\Delta/8$\\
+$ZZI$ & $-3\epsilon/4-W/2+\Delta/8$\\
+$ZZZ$ & $-\epsilon/4-W/2+\Delta/8$\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Coupling Pauli coefficients for the embedded $J=2$ Lipkin Hamiltonian. These terms are proportional to the pair-scattering strength $V$.}
+\label{tab:j2_pauli_coupling}
+\begin{tabularx}{\linewidth}{@{}cY@{}}
+\toprule
+String & Coefficient \\
+\midrule
+$IXI$ & $\frac{3+\sqrt{6}}{4}V$\\
+$IXZ$ & $\frac{\sqrt{6}-3}{4}V$\\
+$XXI$ & $\frac{\sqrt{6}}{4}V$\\
+$XXZ$ & $\frac{\sqrt{6}}{4}V$\\
+$YYI$ & $\frac{\sqrt{6}}{4}V$\\
+$YYZ$ & $\frac{\sqrt{6}}{4}V$\\
+$ZXI$ & $\frac{3+\sqrt{6}}{4}V$\\
+$ZXZ$ & $\frac{\sqrt{6}-3}{4}V$\\
+\bottomrule
+\end{tabularx}
+\end{table}
+\FloatBarrier
+
+
+\newpage
+\Needspace{22\baselineskip}
+\subsection{Excited-state VQE for the Lipkin spectra}
+
+The excited-state VQE spectra in \cref{fig:lipkin_j1_vqe_spectrum,fig:lipkin_j2_vqe_spectrum} reproduce the same levels shown by exact diagonalization in \cref{fig:lipkin_j1_exact,fig:lipkin_j2_exact}. For $J=1$, the three VQE branches lie on top of the exact $0$ and $\pm\sqrt{1+V^2}$ curves. \Cref{fig:lipkin_j1_vqe_spectrum} therefore verifies both the ground-state and excited-state parts of the deflation procedure.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_g_lipkin_j1_vqe_spectrum.pdf}
+\caption{Excited-state VQE spectrum for the $J=1$ Lipkin Hamiltonian. Crosses denote VQE energies and solid lines denote exact diagonalization.}
+\label{fig:lipkin_j1_vqe_spectrum}
+\end{figure}
+
+\Needspace{15\baselineskip}
+For $J=2$, all five levels are recovered across the full scanned interval $0\le V\le2$, as shown in \cref{fig:lipkin_j2_vqe_spectrum}. The agreement confirms that the orthogonality constraints successfully separate successively optimized states even when several eigenvalue branches are present.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_g_lipkin_j2_vqe_spectrum.pdf}
+\caption{Excited-state VQE spectrum for the $J=2$ Lipkin Hamiltonian. The VQE calculation reproduces all five exact eigenvalue branches.}
+\label{fig:lipkin_j2_vqe_spectrum}
+\end{figure}
+
+\Needspace{15\baselineskip}
+The maximum error over all Lipkin levels is shown in \cref{fig:lipkin_vqe_error}. The largest Lipkin errors are $4.44\times10^{-16}$ for $J=1$ and $2.67\times10^{-15}$ for $J=2$. These values are essentially numerical roundoff. This should be interpreted as an ideal-simulation benchmark: the ansatz spans the real embedded Hilbert space, and the energy is evaluated exactly rather than by finite-shot measurement.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{part_g_lipkin_vqe_error.pdf}
+\caption{Maximum absolute Lipkin VQE error over all computed energy levels. The errors remain at roundoff level for both spin sectors.}
+\label{fig:lipkin_vqe_error}
+\end{figure}
+
+\Needspace{15\baselineskip}
+\Cref{tab:error_summary} summarizes the maximum absolute VQE errors for all scans. The errors are small compared with the energy scales in the corresponding spectra, confirming that the observed discrepancies are numerical rather than physical.
+
+\begin{table}[H]
+\centering
+\caption{Maximum absolute VQE errors in the numerical scans. The errors are small compared with the energy scales in the corresponding spectra.}
+\label{tab:error_summary}
+\begin{tabularx}{\linewidth}{@{}YYr@{}}
+\toprule
+System & Target & Max. error \\
+\midrule
+Two-level & ground state & $1.65\times10^{-12}$\\
+Two-qubit & ground state & $4.61\times10^{-12}$\\
+Lipkin $J=1$ & all levels & $4.44\times10^{-16}$\\
+Lipkin $J=2$ & all levels & $2.67\times10^{-15}$\\
+\bottomrule
+\end{tabularx}
+\end{table}
+\FloatBarrier
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+The calculations show how small interacting Hamiltonians can be used to test quantum-state routines, Pauli decompositions, exact diagonalization, and VQE. Bell-state preparation gives the expected correlated measurement outcomes in \cref{tab:bell_measurements} and reduced entropy equal to one. The two-level Hamiltonian exhibits an avoided crossing, visible in \cref{fig:one_qubit_eigenvalues}, and a corresponding interchange of ground-state basis weights in \cref{fig:one_qubit_weights}. The VQE error in \cref{fig:one_qubit_vqe_error} confirms that the single-qubit variational state is sufficient for the real two-level problem.
+
+For the two-qubit Hamiltonian, \cref{fig:two_qubit_eigenvalues} shows a change of the lowest parity sector. The entanglement entropy in \cref{fig:two_qubit_entropy} responds strongly to this spectral change, while \cref{fig:two_qubit_vqe_error} shows that the sector-adapted VQE reproduces the exact ground-state branch. For the Lipkin model, \cref{fig:lipkin_j1_exact,fig:lipkin_j2_exact} show the expected symmetric spectra at $W=0$, and \cref{tab:j1_pauli,tab:j2_pauli_diag,tab:j2_pauli_coupling} give the Pauli-string representation needed for qubit measurements. The excited-state VQE spectra in \cref{fig:lipkin_j1_vqe_spectrum,fig:lipkin_j2_vqe_spectrum} agree with exact diagonalization for all computed levels, with the roundoff-level errors shown in \cref{fig:lipkin_vqe_error} and \cref{tab:error_summary}.
+
+The main limitation is that the simulations are ideal. The Hamiltonian expectation values are exact state-vector quantities, and the Lipkin ansatz is expressive enough to span the relevant real eigenspaces. A hardware-oriented extension would include finite sampling, noise models, constrained circuit depth, and comparison with less expressive hardware-efficient ansaetze. Within the intended noiseless benchmark setting, however, the results are internally consistent and reproduce the analytic and exact-diagonalization limits.
+
+\section*{Data and code availability}
+
+The calculations were performed in the repository \texttt{FYS5419\_Project\_1}. The numerical data are stored as CSV files, and the plotted results are generated from those files. Reproducibility checks consist of running the unit tests, regenerating the CSV data, and rebuilding the figures and report.
+
+\section*{AI assistance declaration}
+
+ChatGPT was used for some help with developing the code, for cleaning up the code while working, and for giving feedback on the report and cleaning up the writing.
+
+\begin{thebibliography}{4}
+
+\bibitem{project1assignment}
+FYS5419/9419, University of Oslo. \emph{Quantum Computing and Quantum Machine Learning, Project 1}. Spring semester 2026.
+
+\bibitem{lmg1965}
+H. J. Lipkin, N. Meshkov, and A. J. Glick. Validity of many-body approximation methods for a solvable model: (I). Exact solutions and perturbation theory. \emph{Nuclear Physics} \textbf{62}, 188--198 (1965). doi: \href{https://doi.org/10.1016/0029-5582(65)90862-X}{10.1016/0029-5582(65)90862-X}.
+
+\bibitem{peruzzo2014vqe}
+A. Peruzzo, J. McClean, P. Shadbolt, M.-H. Yung, X.-Q. Zhou, P. J. Love, A. Aspuru-Guzik, and J. L. O'Brien. A variational eigenvalue solver on a photonic quantum processor. \emph{Nature Communications} \textbf{5}, 4213 (2014). doi: \href{https://doi.org/10.1038/ncomms5213}{10.1038/ncomms5213}.
+
+\bibitem{hlatshwayo2022lipkin}
+M. Q. Hlatshwayo, Y. Zhang, H. Wibowo, R. LaRose, D. Lacroix, and E. Litvinova. Simulating excited states of the Lipkin model on a quantum computer. \emph{Physical Review C} \textbf{106}, 024319 (2022). doi: \href{https://doi.org/10.1103/PhysRevC.106.024319}{10.1103/PhysRevC.106.024319}.
+
+\end{thebibliography}
+
+\end{document}

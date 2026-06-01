@@ -1,0 +1,60 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\geometry{margin=2.7cm}
+
+\hypersetup{colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black, urlcolor=blue!50!black}
+
+\newcommand{\todo}[1]{\par\noindent\textcolor{red!70!black}{\textbf{TODO:} #1}\par}
+
+\title{FYS5419 Project 1: Variational Quantum Eigensolvers and the Lipkin Model}
+\author{Your Name}
+\date{Spring 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\todo{Write a concise summary of the problem, methods, main numerical results, and conclusions.}
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/introduction}
+\input{sections/theory}
+\input{sections/part_a}
+\input{sections/part_b}
+\input{sections/part_c}
+\input{sections/part_d}
+\input{sections/part_e}
+\input{sections/part_f}
+\input{sections/part_g}
+\input{sections/discussion}
+\input{sections/conclusion}
+\input{sections/appendix_ai}
+
+\begin{thebibliography}{9}
+
+\bibitem{course-repo}
+CompPhysics, \emph{Quantum Computing and Quantum Machine Learning}, course repository.\newline
+\url{https://github.com/CompPhysics/QuantumComputingMachineLearning}
+
+\bibitem{hlatshwayo2022}
+M.~Q. Hlatshwayo, Y.~Zhang, H.~Wibowo, R.~LaRose, D.~Lacroix, and E.~Litvinova,
+``Simulating excited states of the Lipkin model on a quantum computer,''
+\emph{Physical Review C} \textbf{106}, 024319 (2022).\newline
+\url{https://doi.org/10.1103/PhysRevC.106.024319}
+
+\end{thebibliography}
+
+\end{document}

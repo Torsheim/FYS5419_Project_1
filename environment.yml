@@ -1,0 +1,16 @@
+name: fys5419-project1
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - tqdm
+  - pytest
+  - jupyter
+  - ipykernel
+  - pip
+  - pip:
+      - -e .

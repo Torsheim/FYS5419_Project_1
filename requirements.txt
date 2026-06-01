@@ -1,0 +1,11 @@
+# Core scientific Python stack
+numpy
+scipy
+matplotlib
+pandas
+tqdm
+
+# Development / notebooks
+pytest
+jupyter
+ipykernel

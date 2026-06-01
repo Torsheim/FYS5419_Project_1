@@ -1,0 +1,27 @@
+J=1: embedded Hamiltonian Pauli coefficients
+H = sum_P c_P P, c_P = c_epsilon*epsilon + c_V*V + c_W*W + c_padding*Delta
+ II: 0.25 Delta
+ IZ: -0.25 Delta
+ XI: -0.5 V
+ XZ: -0.5 V
+ ZI: -0.5 epsilon - 0.25 Delta
+ ZZ: -0.5 epsilon + 0.25 Delta
+
+J=2: embedded Hamiltonian Pauli coefficients
+H = sum_P c_P P, c_P = c_epsilon*epsilon + c_V*V + c_W*W + c_padding*Delta
+III: 1.25 W + 0.375 Delta
+IIZ: -0.25 W - 0.125 Delta
+IXI: 1.3623724357 V
+IXZ: -0.137627564304 V
+IZI: -0.25 epsilon - 0.5 W - 0.125 Delta
+IZZ: 0.25 epsilon - 0.5 W - 0.125 Delta
+XXI: 0.612372435696 V
+XXZ: 0.612372435696 V
+YYI: 0.612372435696 V
+YYZ: 0.612372435696 V
+ZII: -0.5 epsilon + 1.25 W - 0.375 Delta
+ZIZ: -0.5 epsilon - 0.25 W + 0.125 Delta
+ZXI: 1.3623724357 V
+ZXZ: -0.137627564304 V
+ZZI: -0.75 epsilon - 0.5 W + 0.125 Delta
+ZZZ: -0.25 epsilon - 0.5 W + 0.125 Delta
