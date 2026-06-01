@@ -4,21 +4,17 @@ __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 
-# Local external sources
 external/*
 !external/README.md
 
-# Temporary/generated files
 backup_before*/
 *.zip
 *.sh
 
-# Python packaging
 build/
 dist/
 *.egg-info/
 
-# LaTeX build files
 report/*.aux
 report/*.log
 report/*.out
