@@ -1,18 +1,15 @@
-# Report folder
+# Final report
 
-After running
+Main files:
 
-```bash
-python scripts/run_all.py
+- `project1_report.pdf`: final compiled report.
+- `project1_report.tex`: LaTeX source.
+- `figures/`: figure files used by the report.
+
+The PDF is included directly for delivery. The TeX source can also be used
+in Overleaf. For a local Python-driven compile, run this from the repository
+root after installing a LaTeX distribution:
+
+```text
+python scripts/compile_report.py
 ```
-
-compile the draft report from the repository root with:
-
-```bash
-cd report
-pdflatex main.tex
-pdflatex main.tex
-cd ..
-```
-
-Edit `main.tex` with your own explanations, numerical discussion, and final conclusions.

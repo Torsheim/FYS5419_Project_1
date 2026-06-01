@@ -1,33 +1,30 @@
-"""Lipkin model matrices and Pauli decompositions for Parts f-g."""
+"""Compatibility wrappers for Lipkin Hamiltonians and Pauli decompositions.
+
+The final implementations are in :mod:`fys5419_project1.hamiltonians`.
+"""
 
 from __future__ import annotations
 
-import numpy as np
+from .hamiltonians import (
+    format_pauli_decomposition,
+    lipkin_j1,
+    lipkin_j2,
+    pad_to_power_of_two,
+    pad_with_fixed_penalty,
+    padding_projector,
+    pauli_decomposition,
+    reconstruct_from_pauli,
+    sorted_eigh,
+)
 
-Array = np.ndarray
-
-
-def lipkin_j1(epsilon: float, V: float, W: float = 0.0) -> Array:
-    """Return the `J=1` Lipkin Hamiltonian matrix.
-
-    TODO: implement the `W=0` case first, then consider the challenge term.
-    """
-    raise NotImplementedError
-
-
-def lipkin_j2(epsilon: float, V: float, W: float = 0.0) -> Array:
-    """Return the `J=2` Lipkin Hamiltonian matrix.
-
-    TODO: implement the matrix from the assignment.
-    """
-    raise NotImplementedError
-
-
-def pauli_decomposition(matrix: Array, n_qubits: int, tol: float = 1e-12) -> dict[str, complex]:
-    """Decompose a matrix into Pauli strings.
-
-    The returned dictionary should map strings such as ``"IXZ"`` to coefficients.
-
-    TODO: implement a general Pauli-basis projection helper.
-    """
-    raise NotImplementedError
+__all__ = [
+    "format_pauli_decomposition",
+    "lipkin_j1",
+    "lipkin_j2",
+    "pad_to_power_of_two",
+    "pad_with_fixed_penalty",
+    "padding_projector",
+    "pauli_decomposition",
+    "reconstruct_from_pauli",
+    "sorted_eigh",
+]
