@@ -4,25 +4,25 @@ __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 
-external/
-results/raw/
+# Local external sources
+external/*
+!external/README.md
+
+# Temporary/generated files
+backup_before*/
+*.zip
+*.sh
+
+# Python packaging
 build/
 dist/
 *.egg-info/
 
+# LaTeX build files
 report/*.aux
 report/*.log
 report/*.out
 report/*.toc
-report/*.bbl
-report/*.blg
 report/*.synctex.gz
-*.sh
-src/*.egg-info/
-backup_before*/
-*.aux
-*.log
-*.out
-*.toc
-*.fls
-*.fdb_latexmk
+report/*.fls
+report/*.fdb_latexmk

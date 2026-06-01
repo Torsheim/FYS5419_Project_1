@@ -1,41 +1,41 @@
 # FYS5419 Project 1
 
-Repository for **FYS5419/FYS9419 Project 1** by Marius Torsheim,
-Department of Physics, University of Oslo.
+Repository for FYS5419/FYS9419 Project 1 by Marius Torsheim, Department of Physics, University of Oslo.
 
-The project studies small Hamiltonians and the Lipkin model with exact
-diagonalization and self-written variational quantum eigensolver routines.
-The repository contains the Python package, reproducibility scripts, tests,
-selected numerical results, figures, and the final report.
+The project studies one- and two-qubit Hamiltonians and the Lipkin model using exact diagonalization and self-written variational quantum eigensolver routines.
 
-## Repository contents
+## Repository structure
 
-- `src/fys5419_project1/`: implemented Python package.
-- `scripts/`: Python scripts for running calculations and checks.
-- `tests/`: unit tests and repository-polish tests.
-- `results/data/`: selected CSV/TXT outputs.
-- `results/figures/`: report figures.
-- `report/project1_report.pdf`: final report PDF.
-- `report/project1_report.tex`: report source.
+```text
+FYS5419_Project_1/
+├── .github/workflows/      # Continuous integration
+├── data/                   # Optional local data files
+├── docs/                   # Project description and documentation
+├── external/               # Optional local course-source clones, ignored by git
+├── notebooks/              # Exploratory notebooks
+├── report/                 # Final report PDF, LaTeX source, and figures
+├── results/                # Generated data and figures
+├── scripts/                # Python entry points for reproducibility
+├── src/fys5419_project1/   # Python package
+└── tests/                  # Unit and repository-polish tests
+```
+
+## Final report
+
+The final report is available at:
+
+- `report/project1_report.pdf`
+- `report/project1_report.tex`
 
 ## Python workflow
 
-Create and activate a virtual environment in your normal terminal, then run:
-
-```text
+```bash
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 python -m pytest
 python scripts/run_all.py
 python scripts/make_report_figures.py
 python scripts/restricted_ansatz_check.py
-```
-
-The final report PDF is included. If a local LaTeX installation is available,
-the report can be compiled through the Python helper:
-
-```text
-python scripts/compile_report.py
 ```
 
 No shell scripts are required for the project workflow.
